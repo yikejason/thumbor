@@ -5,7 +5,7 @@ edition = "2021"
 
 
 [dependencies]
-axum = "0.7.5" # web 服务器
+axum = { version = "0.7.5", features = ["macros"] } # web 服务器
 anyhow = "1.0.86" # 错误处理
 base64 = "0.22.1" # base64 编码/解码
 bytes = "1" # 处理字节流
@@ -31,6 +31,7 @@ tower-http = { version = "0.5.2", features = [
 ] } # http 中间件
 tracing = "0.1" # 日志和追踪
 tracing-subscriber = "0.3.18" # 日志和追踪
+serde_yaml = "0.9.34"
 
 [build-dependencies]
 prost-build = "0.13.1" # 编译 protobuf
