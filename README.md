@@ -1,0 +1,1 @@
+- cargo tree > dependencies.txt  run cargo tree command to a text file and search for some content

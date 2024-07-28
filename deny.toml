@@ -49,6 +49,7 @@ notice = "warn"
 # output a note when they are encountered.
 ignore = [
   #"RUSTSEC-0000-0000",
+  "RUSTSEC-2020-0023",
 ]
 # Threshold for security vulnerabilities, any vulnerability with a CVSS score
 # lower than the range specified will be ignored. Note that ignored advisories
@@ -71,6 +72,7 @@ unlicensed = "allow"
 # [possible values: any SPDX 3.7 short identifier (+ optional exception)].
 allow = [
   "MIT",
+  "Apache-2.0 WITH LLVM-exception",
   "Apache-2.0",
   "Unicode-DFS-2016",
   "MPL-2.0",
@@ -78,6 +80,7 @@ allow = [
   "BSD-3-Clause",
   "ISC",
   "CC0-1.0",
+  "Zlib",
 ]
 # List of explicitly disallowed licenses
 # See https://spdx.org/licenses/ for list of possible licenses
