@@ -1,9 +1,21 @@
-use axum::extract::Path;
-use percent_encoding::percent_decode_str;
-use reqwest::StatusCode;
-use serde::{Deserialize, Serialize};
+use std::{
+    hash::{DefaultHasher, Hash, Hasher},
+    sync::Arc,
+};
 
-use crate::ImageSpec;
+use anyhow::Result;
+use axum::{
+    extract::{Extension, Path},
+    http::{HeaderMap, HeaderValue, StatusCode},
+};
+use bytes::Bytes;
+use lru::LruCache;
+use percent_encoding::{percent_decode_str, percent_encode, NON_ALPHANUMERIC};
+use serde::{Deserialize, Serialize};
+use tokio::sync::Mutex;
+use tracing::{info, instrument};
+
+use crate::{filter, resize, ImageSpec, Spec};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Params {
@@ -11,11 +23,63 @@ pub struct Params {
     url: String,
 }
 
-pub async fn param_handler(Path(Params { spec, url }): Path<Params>) -> Result<String, StatusCode> {
-    let url = percent_decode_str(&url).decode_utf8_lossy();
-    let spec: ImageSpec = spec
+pub type Cache = Arc<Mutex<LruCache<u64, Bytes>>>;
+
+// TODO: 稍后理解下
+pub async fn generate_handler(
+    Path(Params { spec, url }): Path<Params>,
+    Extension(cache): Extension<Cache>,
+) -> Result<(HeaderMap, Vec<u8>), StatusCode> {
+    let _spec: ImageSpec = spec
         .as_str()
         .try_into()
         .map_err(|_| StatusCode::BAD_REQUEST)?;
-    Ok(format!("url: {}\n spec: {:#?}", url, spec))
+
+    // Ok(format!("url: {}\n spec: {:#?}", url, spec))
+    let url = percent_decode_str(&url).decode_utf8_lossy();
+    let data = retri_image(&url, cache)
+        .await
+        .map_err(|_| StatusCode::BAD_REQUEST)?;
+
+    // TODO: 处理图片
+    let mut headers = HeaderMap::new();
+
+    headers.insert("Content-Type", HeaderValue::from_static("image/jpeg"));
+    Ok((headers, data.to_vec()))
+}
+
+#[instrument(level = "info", skip(cache))]
+async fn retri_image(url: &str, cache: Cache) -> Result<Bytes> {
+    let mut hasher = DefaultHasher::new();
+    url.hash(&mut hasher);
+    let key = hasher.finish();
+    // TODO: 稍后理解下
+    let g = &mut cache.lock().await;
+    let data = match g.get(&key) {
+        Some(v) => {
+            info!("Match cache {}", key);
+            v.to_owned()
+        }
+        None => {
+            info!("Retrieve url");
+            let resp = reqwest::get(url).await?;
+            let data = resp.bytes().await?;
+            g.put(key, data.clone());
+            data
+        }
+    };
+
+    Ok(data)
+}
+
+// 调试辅助函数
+pub fn print_test_url(url: &str) {
+    use std::borrow::Borrow;
+    let spec1 = Spec::new_resize(500, 800, resize::SampleFilter::CatmullRom);
+    let spec2 = Spec::new_watermark(20, 20);
+    let spec3 = Spec::new_filter(filter::Filter::Marine);
+    let image_spec = ImageSpec::new(vec![spec1, spec2, spec3]);
+    let s: String = image_spec.borrow().into();
+    let test_image = percent_encode(url.as_bytes(), NON_ALPHANUMERIC).to_string();
+    println!("test url: http://localhost:3000/image/{}/{}", s, test_image);
 }
