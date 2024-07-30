@@ -9,12 +9,12 @@ axum = { version = "0.7.5", features = ["macros"] } # web 服务器
 anyhow = "1.0.86" # 错误处理
 base64 = "0.22.1" # base64 编码/解码
 bytes = "1" # 处理字节流
-image = "0.25.2" # 处理图片
+image = "0.23" # 处理图片
 lazy_static = "1.5.0" # 通过宏更方便地初始化静态变量
 lru = "0.12.3" # LRU 缓存
 percent-encoding = "2.3.1" # url 编码/解码
 photon-rs = "0.3.2" # 图片效果
-prost = "0.13.1" # protobuf 处理
+prost = "0.8" # protobuf 处理
 reqwest = "0.12.5" # HTTP cliebnt
 serde = { version = "1", features = ["derive"] } # 序列化/反序列化数据
 tokio = { version = "1", features = ["full"] } # 异步处理

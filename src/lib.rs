@@ -1,4 +1,5 @@
 mod config;
+mod engine;
 mod handler;
 mod pb;
 
@@ -6,14 +7,15 @@ use std::{num::NonZeroUsize, sync::Arc};
 
 use anyhow::Result;
 use axum::{routing::get, Router};
-
-pub use config::AppConfig;
-pub use handler::*;
 use lru::LruCache;
-pub use pb::*;
 use tokio::sync::Mutex;
 use tower::ServiceBuilder;
 use tower_http::add_extension::AddExtensionLayer;
+
+pub use config::AppConfig;
+pub use engine::*;
+pub use handler::*;
+pub use pb::*;
 
 pub async fn get_router() -> Result<Router> {
     let app = Router::new().route("/image/:spec/:url", get(generate_handler));
